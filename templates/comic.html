@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comic</title>
+</head>
+<body>
+    <h1 id="comic-title"></h1>
+    <img id="comic-image" src="" alt="">
+    <p id="comic-alt-text"></p>
+
+    <script>
+        const comicId = window.location.pathname.split('/').pop();
+        fetch(`/comics/${comicId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.body.innerHTML = `<h1>${data.error}</h1>`;
+                } else {
+                    document.getElementById('comic-title').textContent = data.title;
+                    document.getElementById('comic-image').src = data.image_url;
+                    document.getElementById('comic-alt-text').textContent = data.alt_text;
+                }
+            });
+    </script>
+</body>
+</html>
