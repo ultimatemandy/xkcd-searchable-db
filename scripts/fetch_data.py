@@ -11,7 +11,7 @@ LATEST_COMIC_URL = "https://xkcd.com/info.0.json"
 RAW_DATA_DIR = "raw_data"
 ENHANCED_DATA_FILE = "enhanced_data.json"
 MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017/")
-DB_NAME = "xkcdDB"
+DB_NAME = "xkcd"
 COLLECTION_NAME = "comics"
 HDFS_URL = os.getenv("HDFS_URL", "http://localhost:50070")
 HDFS_RAW_DATA_DIR = "/user/raw_data"
@@ -108,11 +108,12 @@ def fetch_xkcd_data():
 
 # Function to export cleaned data to MongoDB
 def export_to_mongodb(optimized_comic):
-    collection.update_one(
+    result = collection.update_one(
         {"id": optimized_comic["id"]},
         {"$set": optimized_comic},
         upsert=True
     )
+    print(f"Inserted/Updated comic {optimized_comic['id']} in MongoDB. Matched: {result.matched_count}, Modified: {result.modified_count}")
 
 # Run the data fetching process
 if __name__ == "__main__":
