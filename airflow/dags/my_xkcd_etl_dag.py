@@ -4,35 +4,35 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime
 import requests
 from hdfs import InsecureClient
-from pymongo import MongoClient
 
 # Your Python functions for fetching and cleaning data
 def fetch_data():
     # Fetch data from XKCD and save it to HDFS
-    url = 'https://xkcd.com/info.0.json'
-    response = requests.get(url)
-    data = response.json()
+        url = 'https://xkcd.com/info.0.json'
+        response = requests.get(url)
+        data = response.json()
 
-    hdfs_client = InsecureClient('http://localhost:9870', user='hdfs')
-    with hdfs_client.write('/user/hdfs/xkcd_data.json', encoding='utf-8') as writer:
-        json.dump(data, writer)
+        hdfs_client = InsecureClient('http://localhost:9870', user='hdfs')
+        with hdfs_client.write('/user/hdfs/xkcd_data.json', encoding='utf-8') as writer:
+            json.dump(data, writer)
+
 
 def clean_data():
     # Clean and process the raw data
-    hdfs_client = InsecureClient('http://localhost:9870', user='hdfs')
-    with hdfs_client.read('/user/hdfs/xkcd_data.json', encoding='utf-8') as reader:
-        data = json.load(reader)
+        hdfs_client = InsecureClient('http://localhost:9870', user='hdfs')
+        with hdfs_client.read('/user/hdfs/xkcd_data.json', encoding='utf-8') as reader:
+            data = json.load(reader)
 
-    # Example of cleaning: remove unwanted fields
-    cleaned_data = {
-        'num': data['num'],
-        'title': data['title'],
-        'img': data['img'],
-        'alt': data['alt']
-    }
+        # Example of cleaning: remove unwanted fields
+        cleaned_data = {
+            'num': data['num'],
+            'title': data['title'],
+            'img': data['img'],
+            'alt': data['alt']
+        }
 
-    with hdfs_client.write('/user/hdfs/xkcd_cleaned_data.json', encoding='utf-8') as writer:
-        json.dump(cleaned_data, writer)
+        with hdfs_client.write('/user/hdfs/xkcd_cleaned_data.json', encoding='utf-8') as writer:
+            json.dump(cleaned_data, writer)
 
 def export_to_mongo():
     # Export the cleaned data to MongoDB
@@ -51,7 +51,7 @@ dag = DAG(
     'xkcd_etl',
     description='XKCD ETL Workflow',
     schedule_interval='@daily',  # Adjust as needed
-    start_date=datetime(2023, 11, 24),  # Ensure this is a past date
+    start_date=datetime(2024, 11, 24),
     catchup=False
 )
 
