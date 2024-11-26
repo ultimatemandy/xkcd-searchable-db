@@ -11,10 +11,12 @@ def fetch_data():
         url = 'https://xkcd.com/info.0.json'
         response = requests.get(url)
         data = response.json()
+        print (data)
 
         hdfs_client = InsecureClient('http://localhost:9870', user='hdfs')
         with hdfs_client.write('/user/hdfs/xkcd_data.json', encoding='utf-8') as writer:
             json.dump(data, writer)
+            
 
 
 def clean_data():
@@ -31,7 +33,7 @@ def clean_data():
             'alt': data['alt']
         }
 
-        with hdfs_client.write('/user/hdfs/xkcd_cleaned_data.json', encoding='utf-8') as writer:
+        with hdfs_client.write('/user/hdfs/xkcd_cleaned_data.json', encoding='utf-8',overwrite=true) as writer:
             json.dump(cleaned_data, writer)
 
 def export_to_mongo():
