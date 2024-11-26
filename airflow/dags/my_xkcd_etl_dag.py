@@ -4,40 +4,53 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime
 import requests
 from hdfs import InsecureClient
+from pymongo import MongoClient
 
-# Your Python functions for fetching and cleaning data
+# Function to clear previously written files in HDFS
+def clear_hdfs_files():
+    hdfs_client = InsecureClient('http://localhost:9870', user='hdfs')
+    paths = ['/user/hdfs/xkcd_data.json', '/user/hdfs/xkcd_cleaned_data.json']
+    for path in paths:
+        if hdfs_client.status(path, strict=False):
+            hdfs_client.delete(path)
+            print(f"Deleted {path} from HDFS")
+
+# Function to fetch data from XKCD and save it to HDFS
 def fetch_data():
-    # Fetch data from XKCD and save it to HDFS
-        url = 'https://xkcd.com/info.0.json'
-        response = requests.get(url)
-        data = response.json()
-        print (data)
+    url = 'https://xkcd.com/info.0.json'
+    response = requests.get(url)
+    data = response.json()
+    print("Fetched data from XKCD API:")
+    print(json.dumps(data, indent=2))
 
-        hdfs_client = InsecureClient('http://localhost:9870', user='hdfs')
-        with hdfs_client.write('/user/hdfs/xkcd_data.json', encoding='utf-8') as writer:
-            json.dump(data, writer)
-            
+    hdfs_client = InsecureClient('http://localhost:9870', user='hdfs')
+    with hdfs_client.write('/user/hdfs/xkcd_data.json', encoding='utf-8') as writer:
+        json.dump(data, writer)
 
-
+# Function to clean and process the raw data
 def clean_data():
-    # Clean and process the raw data
-        hdfs_client = InsecureClient('http://localhost:9870', user='hdfs')
-        with hdfs_client.read('/user/hdfs/xkcd_data.json', encoding='utf-8') as reader:
-            data = json.load(reader)
+    hdfs_client = InsecureClient('http://localhost:9870', user='hdfs')
+    with hdfs_client.read('/user/hdfs/xkcd_data.json', encoding='utf-8') as reader:
+        data = json.load(reader)
 
-        # Example of cleaning: remove unwanted fields
-        cleaned_data = {
-            'num': data['num'],
-            'title': data['title'],
-            'img': data['img'],
-            'alt': data['alt']
-        }
+    print("Raw data read from HDFS:")
+    print(json.dumps(data, indent=2))
 
-        with hdfs_client.write('/user/hdfs/xkcd_cleaned_data.json', encoding='utf-8',overwrite=true) as writer:
-            json.dump(cleaned_data, writer)
+    cleaned_data = {
+        'num': data['num'],
+        'title': data['title'],
+        'img': data['img'],
+        'alt': data['alt']
+    }
 
+    print("Cleaned data:")
+    print(json.dumps(cleaned_data, indent=2))
+
+    with hdfs_client.write('/user/hdfs/xkcd_cleaned_data.json', encoding='utf-8') as writer:
+        json.dump(cleaned_data, writer)
+
+# Function to export the cleaned data to MongoDB
 def export_to_mongo():
-    # Export the cleaned data to MongoDB
     client = MongoClient('mongodb://localhost:27017/')
     db = client['xkcd']
     collection = db['comics']
@@ -46,6 +59,9 @@ def export_to_mongo():
     with hdfs_client.read('/user/hdfs/xkcd_cleaned_data.json', encoding='utf-8') as reader:
         cleaned_data = json.load(reader)
 
+    print("Cleaned data to be exported to MongoDB:")
+    print(json.dumps(cleaned_data, indent=2))
+
     collection.insert_one(cleaned_data)
 
 # Define the DAG
@@ -53,11 +69,17 @@ dag = DAG(
     'xkcd_etl',
     description='XKCD ETL Workflow',
     schedule_interval='@daily',  # Adjust as needed
-    start_date=datetime(2024, 11, 24),
+    start_date=datetime(2023, 11, 24),  # Ensure this is a past date
     catchup=False
 )
 
 # Define the tasks
+clear_task = PythonOperator(
+    task_id='clear_hdfs_files',
+    python_callable=clear_hdfs_files,
+    dag=dag
+)
+
 fetch_task = PythonOperator(
     task_id='fetch_data',
     python_callable=fetch_data,
@@ -77,4 +99,4 @@ export_task = PythonOperator(
 )
 
 # Set task dependencies
-fetch_task >> clean_task >> export_task
+clear_task >> fetch_task >> clean_task >> export_task
