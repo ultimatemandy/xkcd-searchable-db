@@ -3,24 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
-    <title> XKCD Comics</title>
+    <title>Simple Flask App</title>
 </head>
 <body>
-    <h1>Comics</h1>
-    <ul id="comics-list"></ul>
-
-    <script>
-        fetch('/comics')
-            .then(response => response.json())
-            .then(data => {
-                const comicsList = document.getElementById('comics-list');
-                data.forEach(comic => {
-                    const listItem = document.createElement('li');
-                    listItem.textContent = `${comic.id}: ${comic.title}`;
-                    comicsList.appendChild(listItem);
-                });
-            });
-    </script>
+    <h1>Hello, Flask!</h1>
 </body>
 </html>
