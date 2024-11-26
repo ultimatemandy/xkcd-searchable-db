@@ -15,6 +15,14 @@ def clear_hdfs_files():
             hdfs_client.delete(path)
             print(f"Deleted {path} from HDFS")
 
+# Function to clear the MongoDB collection
+def clear_mongo_collection():
+    client = MongoClient('mongodb://localhost:27017/')
+    db = client['xkcd']
+    collection = db['comics']
+    result = collection.delete_many({})
+    print(f"Cleared {result.deleted_count} documents from the MongoDB collection.")
+
 # Function to fetch data from XKCD and save it to HDFS
 def fetch_data():
     url = 'https://xkcd.com/info.0.json'
@@ -74,9 +82,15 @@ dag = DAG(
 )
 
 # Define the tasks
-clear_task = PythonOperator(
+clear_hdfs_task = PythonOperator(
     task_id='clear_hdfs_files',
     python_callable=clear_hdfs_files,
+    dag=dag
+)
+
+clear_mongo_task = PythonOperator(
+    task_id='clear_mongo_collection',
+    python_callable=clear_mongo_collection,
     dag=dag
 )
 
@@ -99,4 +113,4 @@ export_task = PythonOperator(
 )
 
 # Set task dependencies
-clear_task >> fetch_task >> clean_task >> export_task
+clear_hdfs_task >> clear_mongo_task >> fetch_task >> clean_task >> export_task
