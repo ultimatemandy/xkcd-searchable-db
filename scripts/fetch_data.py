@@ -7,10 +7,7 @@ from hdfs import InsecureClient
 
 # Constants
 XKCD_URL = "https://xkcd.com/{}/info.0.json"
-BASE_URL = "https://xkcd.com/"
-ENDPOINT = "/info.0.json"
-START_COMIC = 1
-END_COMIC = 10
+LATEST_COMIC_URL = "https://xkcd.com/info.0.json"
 RAW_DATA_DIR = "raw_data"
 ENHANCED_DATA_FILE = "enhanced_data.json"
 MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017/")
@@ -51,9 +48,14 @@ def clean_and_optimize_data(raw_data):
 
 # Function to fetch comic data from XKCD
 def fetch_xkcd_data():
+    # Get the latest comic ID
+    response = requests.get(LATEST_COMIC_URL)
+    latest_comic = response.json()
+    latest_comic_id = latest_comic['num']
+    
     enhanced_comics = []
     
-    for comic_id in range(START_COMIC, END_COMIC + 1):
+    for comic_id in range(1, latest_comic_id + 1):
         url = XKCD_URL.format(comic_id)
         
         # Fetch comic data
