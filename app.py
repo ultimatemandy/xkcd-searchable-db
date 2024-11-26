@@ -16,6 +16,7 @@ collection = db[COLLECTION_NAME]
 
 @app.route('/')
 def index():
+    print("Rendering index page")
     return render_template('index.html')
 
 @app.route('/comics', methods=['GET'])
@@ -34,6 +35,18 @@ def get_comic(comic_id):
 @app.route('/comic/<int:comic_id>')
 def comic_page(comic_id):
     return render_template('comic.html')
+
+@app.route('/test_connection')
+def test_connection():
+    try:
+        # Try a simple database operation
+        comic = collection.find_one()  # Fetch a single document from the collection
+        if comic:
+            return jsonify({"message": "MongoDB connection successful", "comic": comic})
+        else:
+            return jsonify({"message": "MongoDB connection successful, but no comics found!"})
+    except Exception as e:
+        return jsonify({"error": f"Failed to connect to MongoDB: {str(e)}"})
 
 if __name__ == '__main__':
     app.run(debug=True)
