@@ -31,7 +31,11 @@ db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
 
 # Initialize HDFS client
-hdfs_client = InsecureClient(HDFS_URL)
+try:
+    hdfs_client = InsecureClient(HDFS_URL)
+except Exception as e:
+    print(f"Failed to connect to HDFS: {e}")
+    hdfs_client = None
 
 # Function to clean and optimize raw data
 def clean_and_optimize_data(raw_data):
@@ -68,16 +72,18 @@ def fetch_xkcd_data():
                 with open(raw_data_path, 'w') as raw_file:
                     json.dump(current_comic, raw_file, indent=4)
 
-                hdfs_raw_data_path = f"{HDFS_RAW_DATA_DIR}/comic_{comic_id}.json"
-                with hdfs_client.write(hdfs_raw_data_path, encoding='utf-8') as hdfs_file:
-                    json.dump(current_comic, hdfs_file, indent=4)
+                if hdfs_client:
+                    hdfs_raw_data_path = f"{HDFS_RAW_DATA_DIR}/comic_{comic_id}.json"
+                    with hdfs_client.write(hdfs_raw_data_path, encoding='utf-8') as hdfs_file:
+                        json.dump(current_comic, hdfs_file, indent=4)
 
                 optimized_comic = clean_and_optimize_data(current_comic)
                 enhanced_comics.append(optimized_comic)
 
-                hdfs_final_data_path = f"{HDFS_FINAL_DATA_DIR}/comic_{comic_id}.json"
-                with hdfs_client.write(hdfs_final_data_path, encoding='utf-8') as hdfs_file:
-                    json.dump(optimized_comic, hdfs_file, indent=4)
+                if hdfs_client:
+                    hdfs_final_data_path = f"{HDFS_FINAL_DATA_DIR}/comic_{comic_id}.json"
+                    with hdfs_client.write(hdfs_final_data_path, encoding='utf-8') as hdfs_file:
+                        json.dump(optimized_comic, hdfs_file, indent=4)
 
                 export_to_mongodb(optimized_comic)
                 time.sleep(1)
@@ -90,8 +96,9 @@ def fetch_xkcd_data():
     with open(ENHANCED_DATA_FILE, 'w') as enhanced_file:
         json.dump(enhanced_comics, enhanced_file, indent=4)
 
-    with hdfs_client.write(HDFS_ENHANCED_DATA_FILE, encoding='utf-8') as hdfs_file:
-        json.dump(enhanced_comics, hdfs_file, indent=4)
+    if hdfs_client:
+        with hdfs_client.write(HDFS_ENHANCED_DATA_FILE, encoding='utf-8') as hdfs_file:
+            json.dump(enhanced_comics, hdfs_file, indent=4)
 
 # Function to export cleaned data to MongoDB
 def export_to_mongodb(optimized_comic):
@@ -104,12 +111,14 @@ def export_to_mongodb(optimized_comic):
 
 # Function to clear previously written files in HDFS
 def clear_hdfs_files():
-    hdfs_client = InsecureClient('http://localhost:9870', user='hdfs')
-    paths = ['/user/hdfs/xkcd_data.json', '/user/hdfs/xkcd_cleaned_data.json']
-    for path in paths:
-        if hdfs_client.status(path, strict=False):
-            hdfs_client.delete(path)
-            print(f"Deleted {path} from HDFS")
+    if hdfs_client:
+        paths = ['/user/hdfs/xkcd_data.json', '/user/hdfs/xkcd_cleaned_data.json']
+        for path in paths:
+            if hdfs_client.status(path, strict=False):
+                hdfs_client.delete(path)
+                print(f"Deleted {path} from HDFS")
+    else:
+        print("HDFS client is not available.")
 
 # Function to clear the MongoDB collection
 def clear_mongo_collection():
