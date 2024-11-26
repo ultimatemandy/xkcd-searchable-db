@@ -1,10 +1,16 @@
 import json
+import os
+import sys
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime
 from fetch_data import fetch_xkcd_data, clean_and_optimize_data, export_to_mongodb
 from hdfs import InsecureClient
 from pymongo import MongoClient
+
+# Add the directory containing fetch_data.py to the Python path
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
 
 # Function to clear previously written files in HDFS
 def clear_hdfs_files():
