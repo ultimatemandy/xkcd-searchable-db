@@ -7,10 +7,11 @@ from pymongo import MongoClient
 from hdfs import InsecureClient
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.utils.dag_processing import get_logger
+from airflow.utils.dates import days_ago
+import logging
 
 # Constants
-logger = get_logger(__name__)
+logger = logging.getLogger("airflow.task")
 XKCD_URL = "https://xkcd.com/{}/info.0.json"
 LATEST_COMIC_URL = "https://xkcd.com/info.0.json"
 HDFS_URL = os.getenv("HDFS_URL", "http://localhost:50070")
