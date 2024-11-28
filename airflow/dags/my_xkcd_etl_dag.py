@@ -7,14 +7,13 @@ from pymongo import MongoClient
 from hdfs import InsecureClient
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.utils.dates import days_ago
 import logging
 
 # Constants
 logger = logging.getLogger("airflow.task")
 XKCD_URL = "https://xkcd.com/{}/info.0.json"
 LATEST_COMIC_URL = "https://xkcd.com/info.0.json"
-HDFS_URL = os.getenv("HDFS_URL", "http://localhost:50070")
+HDFS_URL = os.getenv("HDFS_URL", "http://localhost:9870")  # Ensure this is the correct HDFS URL
 MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017/")
 RAW_DATA_DIR = os.getenv("RAW_DATA_DIR", "/airflow_data/raw_data")
 DB_NAME = "xkcd"
