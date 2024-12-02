@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XKCD Searchable Database</title>
+    <title>Search Results</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -54,9 +54,16 @@
 </head>
 <body>
     <div class="container">
-        <h1>XKCD Searchable Database</h1>
-        <img src="{{ comic.image_url }}" alt="{{ comic.alt_text }}">
-        <p>{{ comic.alt_text }}</p>
+        <h1>Search Results for "{{ query }}"</h1>
+        {% if comic %}
+            <div class="comic">
+                <h2>{{ comic.title }}</h2>
+                <img src="{{ comic.img }}" alt="{{ comic.alt_text }}">
+                <p>{{ comic.alt_text }}</p>
+            </div>
+        {% else %}
+            <p>No comics found.</p>
+        {% endif %}
         <button class="back-button" onclick="window.location.href='/'">Back to Search</button>
     </div>
 </body>

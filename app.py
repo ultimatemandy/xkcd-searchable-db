@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, render_template, request, jsonify
 from pymongo import MongoClient
 import os
 
@@ -15,25 +15,20 @@ db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
 
 @app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/comics', methods=['GET'])
-def get_comics():
-    comics = list(collection.find({}, {'_id': 0}))
-    return jsonify(comics)
-
-@app.route('/comics/<int:comic_id>', methods=['GET'])
-def get_comic(comic_id):
-    comic = collection.find_one({"id": comic_id}, {'_id': 0})
-    if comic:
-        return jsonify(comic)
-    else:
-        return jsonify({"error": "Comic not found"}), 404
-
-@app.route('/comic/<int:comic_id>')
-def comic_page(comic_id):
+def search_landing():
     return render_template('comic.html')
+
+@app.route('/search', methods=['GET'])
+def search_comics():
+    query = request.args.get('query', '')
+    if not query:
+        return jsonify({"error": "Query parameter is required"}), 400
+
+    comic = collection.find_one({"$text": {"$search": query}}, {'_id': 0})
+    if comic:
+        return render_template('search_results.html', comic=comic, query=query)
+    else:
+        return render_template('search_results.html', comic=None, query=query)
 
 if __name__ == '__main__':
     app.run(debug=True)
